@@ -1,2 +1,0 @@
-# Golang
- first go project

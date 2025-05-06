@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  group-service:
+    build: .
+    container_name: group-service
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: "postgres://postgres:${DB_PASSWORD:-secret}@db:5432/gymi?sslmode=disable"
+      JWT_SECRET: "${JWT_SECRET:-default_jwt_secret}"
+      APP_ENV: "production"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  db:
+    image: postgres:15-alpine
+    container_name: group-service-db
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: "${DB_PASSWORD:-secret}"
+      POSTGRES_DB: "gymi"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d  # Автозапуск миграций
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  pg_data:

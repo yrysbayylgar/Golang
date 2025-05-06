@@ -1,29 +1,33 @@
 package connections
 
 import (
-	"fmt"
-	"myapp/internal/app/config"
+	"log"
 
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq" // PostgreSQL драйвер
+	_ "github.com/lib/pq" // Postgres driver
+
+	"myapp/internal/app/config"
 )
 
 type Connections struct {
 	DB *sqlx.DB
 }
 
-// NewConnections устанавливает соединения (например, с БД)
 func NewConnections(cfg *config.Config) (*Connections, error) {
-	db, err := sqlx.Connect("postgres", cfg.DatabaseURL)
+	db, err := sqlx.Connect("postgres", cfg.DB.DatabaseURL)
 	if err != nil {
-		return nil, fmt.Errorf("ошибка подключения к базе данных: %w", err)
+		return nil, err
 	}
-	return &Connections{DB: db}, nil
+
+	return &Connections{
+		DB: db,
+	}, nil
 }
 
-// Close закрывает соединения
 func (c *Connections) Close() {
 	if c.DB != nil {
-		c.DB.Close()
+		if err := c.DB.Close(); err != nil {
+			log.Println("Error closing DB:", err)
+		}
 	}
 }

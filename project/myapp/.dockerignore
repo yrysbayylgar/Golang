@@ -1,0 +1,9 @@
+.git
+*.md
+*.log
+bin/
+tmp/
+.env
+*.swp
+.vscode/
+.idea/
